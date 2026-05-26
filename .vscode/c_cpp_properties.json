@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${env:TEENSY_HW}/cores/teensy4",
+                "${env:TEENSY_HW}/libraries/**",
+                "${env:ETL_INCLUDE}/**"
+            ],
+            "forcedInclude": [
+                "ext/pulse2d/pulse2d/pulse2d.h",
+                "ext/pulse2d/pulse2d/graphics/all.h"
+            ],
+            "defines": [
+                "__IMXRT1062__",
+                "F_CPU=600000000",
+                "PULSE2D_HEADER=\"pulse2d/pulse2d.h\"",
+                "PULSE2D_GRAPHICS=\"pulse2d/graphics/all.h\"",
+                "TEENSYDUINO=160",
+                "DEBUG",
+                "ARDUINO=10819",
+                "ARDUINO_TEENSY41",
+                "USB_SERIAL",
+                "LAYOUT_US_ENGLISH"
+            ],
+            "compilerPath": "arm-none-eabi-g++",
+            "intelliSenseMode": "gcc-arm",
+        }
+    ],
+    "version": 4
+}
