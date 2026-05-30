@@ -22,10 +22,10 @@ PULSE2D_ON_GAMESCENE_START(Level_One)
     PULSE2D_SET_SPRITE_FLASH(sprite_planets, bg_3, 320, 240);
     PULSE2D_SET_SPRITE_FLASH(sprite_dust, bg_4, 320, 240);
 
-    PULSE2D_ADD_SCROLLING_LAYER(sprite_nebula, 320.0f, 10.0f);
-    PULSE2D_ADD_SCROLLING_LAYER(sprite_stars, 320.0f, 3.0f);
-    PULSE2D_ADD_SCROLLING_LAYER(sprite_planets, 320.0f, 25.0f);
-    PULSE2D_ADD_SCROLLING_LAYER(sprite_dust, 320.0f, 65.0f);
+    PULSE2D_ADD_PARALLAX_LAYER(sprite_nebula, 320.0f, 10.0f);
+    PULSE2D_ADD_PARALLAX_LAYER(sprite_stars, 320.0f, 3.0f);
+    PULSE2D_ADD_PARALLAX_LAYER(sprite_planets, 320.0f, 25.0f);
+    PULSE2D_ADD_PARALLAX_LAYER(sprite_dust, 320.0f, 65.0f);
 }
 
 PULSE2D_ON_GAMESCENE(Level_One)
