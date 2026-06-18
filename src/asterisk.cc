@@ -53,6 +53,8 @@ PULSE2D_ON_GAMESCENE(Level_One)
     PULSE2D_TICK_WORLD(Level_One);
     PULSE2D_POLL_SEESAW_GAMEPAD();
 
+    PULSE2D_RENDER_BACKGROUNDS();
+
     auto& ship = PULSE2D_GET_BODY(ship_object);
 
     // @TODO: Prevent leaving the screen
@@ -66,8 +68,6 @@ PULSE2D_ON_GAMESCENE(Level_One)
             30.0f,
             0.0f);
     }
-
-    PULSE2D_RENDER_BACKGROUNDS();
 
     PULSE2D_DRAW(ship_object, ship_sprite);
 
