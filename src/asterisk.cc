@@ -7,61 +7,80 @@
 #include "../include/planet-bg.h"
 #include "../include/stars-bg.h"
 
+#include "../include/animated-laser-collision.h"
+#include "../include/animated-ship.h"
+
 PULSE2D_START_PULSE();
 
-PULSE2D_ENABLE_SEESAW_GAMEPAD();
-
 // @TODO: Better error handling on malformed sizing
-PULSE2D_DEFINE_SCENE(Level_One, 3, 6);
+PULSE_DEFINE_SCENE(Level_One, 4, 7);
 
-PULSE2D_GAME_SCENES(Level_One);
+PULSE_INIT_GAME(asterisk, Level_One);
 
-PULSE2D_ON_GAMESCENE_START(Level_One)
+PULSE_DEFINE_ANIMATOR(ship_animator);
+PULSE_ANIMATION_DEFINITION(ship_thrust, animated_ship, 44, 39, 8, 60);
+
+PULSE_ON_GAMESCENE_START(Level_One)
 {
-    PULSE2D_SPRITE(ship_sprite, "ship_1.bin", 44, 39);
-    PULSE2D_SPRITE(laser_sprite, "fire_shot_2_2.bin", 35, 4);
+    asterisk.set_sprite("ship_sprite", "ship_1.bin", 44, 39);
+    asterisk.set_sprite("laser_sprite", "fire_shot_2_2.bin", 35, 4);
+    asterisk.set_sprite("meteor_sprite", "meteor_2.bin", 85, 75);
 
-    PULSE2D_SPRITE_FLASH(sprite_nebula, bg_1, 320, 240);
-    PULSE2D_SPRITE_FLASH(sprite_stars, bg_2, 320, 240);
-    PULSE2D_SPRITE_FLASH(sprite_planets, bg_3, 320, 240);
-    PULSE2D_SPRITE_FLASH(sprite_dust, bg_4, 320, 240);
+    asterisk.set_sprite_flash("sprite_nebula", bg_1, 320, 240);
+    asterisk.set_sprite_flash("sprite_stars", bg_2, 320, 240);
+    asterisk.set_sprite_flash("sprite_planets", bg_3, 320, 240);
+    asterisk.set_sprite_flash("sprite_dust", bg_4, 320, 240);
 
-    PULSE2D_INIT_POOL(laser_ammo,
+    asterisk.register_vfx(
+        "laser_collision", animated_laser_collision, 15, 27, 2, 17);
+
+    asterisk.set_controlled_body("ship_object",
+        {
+            .position = { -4.32f, 2.51f },
+            .velocity = { 0.0f,   0.0f  },
+            .width = { 1.0f,   1.0f  },
+    });
+
+    asterisk.set_static_body("meteor_object",
+        {
+            .position = { 3.32f, 1.51f },
+            .velocity = { 0.0f,  0.0f  },
+            .width = { 4.0f,  2.0f  },
+            .is_sensor = true
+    });
+
+    asterisk.init_pool("laser_gun",
         {
             .position = { -10.0f, 0.0f },
             .velocity = { 0.0f,   0.0f },
-            .width = { 1.0f,   0.5f },
-            .friction = 0.0f
+            .width = { 2.0f,   0.5f },
+            .is_sensor = true
     });
 
-    PULSE2D_CONTROLLED_BODY(ship_object,
-        {
-            .position = { -4.32f, 2.5111f },
-            .velocity = { 0.0f,   0.0f    },
-            .width = { 1.0f,   1.0f    },
-            .friction = 0.0f
-    });
-
-    PULSE2D_ADD_PARALLAX_LAYER(sprite_nebula, 320.0f, 13.0f);
-    PULSE2D_ADD_PARALLAX_LAYER(sprite_stars, 320.0f, 6.0f);
-    PULSE2D_ADD_PARALLAX_LAYER(sprite_planets, 320.0f, 28.0f);
-    PULSE2D_ADD_PARALLAX_LAYER(sprite_dust, 320.0f, 68.0f);
+    asterisk.add_parallax_layer("sprite_nebula", 320.0f, 13.0f);
+    asterisk.add_parallax_layer("sprite_stars", 320.0f, 6.0f);
+    asterisk.add_parallax_layer("sprite_planets", 320.0f, 28.0f);
+    asterisk.add_parallax_layer("sprite_dust", 320.0f, 68.0f);
 }
 
-PULSE2D_ON_GAMESCENE(Level_One)
+PULSE_ON_GAMESCENE(Level_One)
 {
-    PULSE2D_TICK_WORLD(Level_One);
-    PULSE2D_POLL_SEESAW_GAMEPAD();
+    asterisk.tick();
 
-    PULSE2D_RENDER_BACKGROUNDS();
+    PULSE_POLL_SEESAW_GAMEPAD();
 
-    auto& ship = PULSE2D_GET_BODY(ship_object);
+    asterisk.render_backgrounds();
+
+    pulse2d_body& ship = asterisk.get_body("ship_object");
+
+    register_animation(ship_animator, ship_thrust);
 
     // @TODO: Prevent leaving the screen
-    SEESAW_ARCADE_DIRECTIONAL_MOVEMENT_INVERTED(ship_object, 12.55f, true);
+    asterisk.set_arcade_directional_inverted_control(
+        "ship_object", 12.55f, true);
 
     if (SEESAW_BUTTON_INPUT(SEESAW_A)) {
-        PULSE2D_SPAWN(laser_ammo,
+        asterisk.spawn("laser_gun",
             250,
             ship.position.x + 1.0f,
             ship.position.y,
@@ -69,33 +88,46 @@ PULSE2D_ON_GAMESCENE(Level_One)
             0.0f);
     }
 
-    PULSE2D_DRAW(ship_object, ship_sprite);
+    asterisk.draw("ship_object", "ship_sprite");
+    asterisk.draw("meteor_object", "meteor_sprite");
 
-    PULSE2D_RENDER_POOL(laser_ammo, [&](auto* laser_object) {
+    asterisk.render_pool("laser_gun", [&](pulse2d_body* laser_object) {
+        pulse2d_body& meteor = asterisk.get_body("meteor_object");
+
         if (laser_object->position.x > 6.67f or
             laser_object->position.x < -10.0f) {
-            PULSE2D_DESPAWN(laser_ammo, laser_object);
+            asterisk.despawn("laser_gun", laser_object);
         } else {
-            PULSE2D_DRAW_BODY(laser_object, laser_sprite);
+            asterisk.draw_body(laser_object, "laser_sprite");
         }
+
+        asterisk.on_collision(laser_object, &meteor, [&] {
+            auto coords = get_body_coordinates(laser_object);
+            asterisk.play_vfx("laser_collision",
+                to_int16(coords.x + 12),
+                to_int16(coords.y - 12));
+            asterisk.despawn("laser_gun", laser_object);
+        });
     });
 
-    PULSE2D_RENDER(active_scene);
+    asterisk.tick_animation(ship_animator, "ship_sprite");
+    asterisk.tick_vfx();
+
+    asterisk.render();
 }
 
-PULSE2D_ON_GAMESTART()
+PULSE_ON_GAMESTART()
 {
     Serial.begin(115200);
 
-    // PULSE2D_POLL_SERIAL_CONNECTION();
-
-    PULSE2D_REGISTER_ETL_ERROR_HANDLER();
-    PULSE2D_INIT(0.0f, 0.0f, 10);
-    PULSE2D_START_SEESAW_GAMEPAD();
-    PULSE2D_SET_SCENE(Level_One);
+    // PULSE_POLL_SERIAL_CONNECTION();
+    pulse_register_etl_error_handler();
+    asterisk.init(0.0f, 0.0f, 10);
+    start_seesaw_gamepad();
+    PULSE_SET_SCENE(asterisk, Level_One);
 }
 
-PULSE2D_ON_GAMELOOP()
+PULSE_ON_GAMELOOP()
 {
-    PULSE2D_TICK_GAMESCENE();
+    PULSE_TICK_GAMESCENE();
 }
