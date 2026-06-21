@@ -8,13 +8,13 @@
                 "${env:ETL_INCLUDE}/**"
             ],
             "forcedInclude": [
-                "ext/pulse2d/pulse2d/pulse2d.h",
+                "ext/pulse2d/pulse2d/core.h",
                 "ext/pulse2d/pulse2d/graphics/all.h"
             ],
             "defines": [
                 "__IMXRT1062__",
                 "F_CPU=600000000",
-                "PULSE2D_HEADER=\"pulse2d/pulse2d.h\"",
+                "PULSE2D_HEADER=\"pulse2d/core.h\"",
                 "PULSE2D_GRAPHICS=\"pulse2d/graphics/all.h\"",
                 "TEENSYDUINO=160",
                 "DEBUG",

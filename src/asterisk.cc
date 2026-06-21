@@ -119,11 +119,10 @@ PULSE_ON_GAMESCENE(Level_One)
 PULSE_ON_GAMESTART()
 {
     Serial.begin(115200);
-
     // PULSE_POLL_SERIAL_CONNECTION();
     pulse_register_etl_error_handler();
     asterisk.init(0.0f, 0.0f, 10);
-    start_seesaw_gamepad();
+    PULSE_ENABLE_SEESAW_GAMEPAD();
     PULSE_SET_SCENE(asterisk, Level_One);
 }
 
