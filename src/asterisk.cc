@@ -57,10 +57,10 @@ PULSE_ON_GAMESCENE_START(Level_One)
             .is_sensor = true
     });
 
-    asterisk.add_parallax_layer("sprite_nebula", 320.0f, 13.0f);
-    asterisk.add_parallax_layer("sprite_stars", 320.0f, 6.0f);
-    asterisk.add_parallax_layer("sprite_planets", 320.0f, 28.0f);
-    asterisk.add_parallax_layer("sprite_dust", 320.0f, 68.0f);
+    asterisk.add_parallax_layer("sprite_nebula", 320.0f, 19.0f);
+    asterisk.add_parallax_layer("sprite_stars", 320.0f, 12.0f);
+    asterisk.add_parallax_layer("sprite_planets", 320.0f, 34.0f);
+    asterisk.add_parallax_layer("sprite_dust", 320.0f, 47.0f);
 }
 
 PULSE_ON_GAMESCENE(Level_One)
