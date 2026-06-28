@@ -13,23 +13,17 @@
 PULSE2D_START_PULSE();
 
 // @TODO: Better error handling on malformed sizing
-PULSE_DEFINE_SCENE(Level_One, 4, 7);
+PULSE_DEFINE_SCENE(Level_One, 9, 8);
 
 PULSE_INIT_GAME(asterisk, Level_One);
 
 PULSE_DEFINE_ANIMATOR(ship_animator);
 PULSE_ANIMATION_DEFINITION(ship_thrust, animated_ship, 44, 39, 8, 60);
 
-PULSE_ON_GAMESCENE_START(Level_One)
+void set_player_ship()
 {
-    asterisk.set_sprite("ship_sprite", "ship_1.bin", 44, 39);
-    asterisk.set_sprite("laser_sprite", "fire_shot_2_2.bin", 35, 4);
-    asterisk.set_sprite("meteor_sprite", "meteor_2.bin", 85, 75);
-
-    asterisk.set_sprite_flash("sprite_nebula", bg_1, 320, 240);
-    asterisk.set_sprite_flash("sprite_stars", bg_2, 320, 240);
-    asterisk.set_sprite_flash("sprite_planets", bg_3, 320, 240);
-    asterisk.set_sprite_flash("sprite_dust", bg_4, 320, 240);
+    asterisk.set_sprite("ship_sprite", "ship_1.bin");
+    asterisk.set_sprite("laser_sprite", "fire_shot_2_2.bin");
 
     asterisk.register_vfx(
         "laser_collision", animated_laser_collision, 15, 27, 2, 17);
@@ -39,14 +33,7 @@ PULSE_ON_GAMESCENE_START(Level_One)
             .position = { -4.32f, 2.51f },
             .velocity = { 0.0f,   0.0f  },
             .width = { 1.0f,   1.0f  },
-    });
-
-    asterisk.set_static_body("meteor_object",
-        {
-            .position = { 3.32f, 1.51f },
-            .velocity = { 0.0f,  0.0f  },
-            .width = { 4.0f,  2.0f  },
-            .is_sensor = true
+            .mass = 1.0f,
     });
 
     asterisk.init_pool("laser_gun",
@@ -56,11 +43,51 @@ PULSE_ON_GAMESCENE_START(Level_One)
             .width = { 2.0f,   0.5f },
             .is_sensor = true
     });
+}
 
-    asterisk.add_parallax_layer("sprite_nebula", 320.0f, 19.0f);
-    asterisk.add_parallax_layer("sprite_stars", 320.0f, 12.0f);
-    asterisk.add_parallax_layer("sprite_planets", 320.0f, 34.0f);
-    asterisk.add_parallax_layer("sprite_dust", 320.0f, 47.0f);
+void set_blue_background()
+{
+    asterisk.set_sprite_flash("sprite_nebula", bg_1, 320, 240);
+    asterisk.set_sprite_flash("sprite_stars", bg_2, 320, 240);
+    asterisk.set_sprite_flash("sprite_planets", bg_3, 320, 240);
+    asterisk.set_sprite_flash("sprite_dust", bg_4, 320, 240);
+
+    asterisk.add_parallax_layer("sprite_nebula", 320.0f, 15.0f);
+    asterisk.add_parallax_layer("sprite_stars", 320.0f, 20.0f);
+    asterisk.add_parallax_layer("sprite_planets", 320.0f, 40.0f);
+    asterisk.add_parallax_layer("sprite_dust", 320.0f, 50.0f);
+}
+
+void set_static_walls()
+{
+    asterisk.set_static_body("top_wall",
+        {
+            .position = { -4.5f, 4.0f },
+            .width = { 2.0f,  0.5f },
+    });
+
+    asterisk.set_static_body("bottom_wall",
+        {
+            .position = { -4.5f, -4.0f },
+            .width = { 2.0f,  0.5f  },
+    });
+}
+
+PULSE_ON_GAMESCENE_START(Level_One)
+{
+    set_blue_background();
+    set_static_walls();
+    set_player_ship();
+
+    asterisk.set_sprite("meteor_sprite", "meteor_2.bin");
+
+    asterisk.set_static_body("meteor_object",
+        {
+            .position = { 3.32f, 1.51f },
+            .velocity = { 0.0f,  0.0f  },
+            .width = { 4.0f,  2.0f  },
+            .is_sensor = true
+    });
 }
 
 PULSE_ON_GAMESCENE(Level_One)
@@ -75,7 +102,6 @@ PULSE_ON_GAMESCENE(Level_One)
 
     register_animation(ship_animator, ship_thrust);
 
-    // @TODO: Prevent leaving the screen
     asterisk.set_arcade_directional_inverted_control(
         "ship_object", 12.55f, true);
 
