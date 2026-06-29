@@ -2,6 +2,8 @@
 #include PULSE2D_HEADER
 #include PULSE2D_GRAPHICS
 
+#include "asteroids.h"
+
 #include "../include/dust-bg.h"
 #include "../include/nebula-bg.h"
 #include "../include/planet-bg.h"
@@ -12,14 +14,23 @@
 
 PULSE2D_START_PULSE();
 
-// @TODO: Better error handling on malformed sizing
-PULSE_DEFINE_SCENE(Level_One, 9, 8);
+// @TODO: Pre-pass inventory management
+PULSE_DEFINE_SCENE(Level_One, 6, 12);
 
 PULSE_INIT_GAME(asterisk, Level_One);
 
 PULSE_DEFINE_ANIMATOR(ship_animator);
 PULSE_ANIMATION_DEFINITION(ship_thrust, animated_ship, 44, 39, 8, 60);
 
+PULSE_DEFINE asteriods::Asteroid_Manager asteriods_{};
+
+/**
+ * @brief
+ * Set the player ship object
+ *
+ * @scope: all
+ * @allocate: 2 bodies, 2 sprites
+ */
 void set_player_ship()
 {
     asterisk.set_sprite("ship_sprite", "ship_1.bin");
@@ -45,6 +56,13 @@ void set_player_ship()
     });
 }
 
+/**
+ * @brief
+ * Set a blue parallax background
+ *
+ * @scope: all
+ * @allocate: 0 bodies, 4 sprites
+ */
 void set_blue_background()
 {
     asterisk.set_sprite_flash("sprite_nebula", bg_1, 320, 240);
@@ -58,6 +76,13 @@ void set_blue_background()
     asterisk.add_parallax_layer("sprite_dust", 320.0f, 50.0f);
 }
 
+/**
+ * @brief
+ * Set the static walls objects
+ *
+ * @scope: all
+ * @allocate: 2 bodies, 0 sprites
+ */
 void set_static_walls()
 {
     asterisk.set_static_body("top_wall",
@@ -73,21 +98,62 @@ void set_static_walls()
     });
 }
 
+/**
+ * @brief
+ * First level Scene Start
+ *
+ * @scope: Level_One
+ */
 PULSE_ON_GAMESCENE_START(Level_One)
 {
     set_blue_background();
     set_static_walls();
     set_player_ship();
 
-    asterisk.set_sprite("meteor_sprite", "meteor_2.bin");
+    asterisk.set_sprite("meteor_1m_sprite", "meteors/meteor_1_m.bin");
+    asterisk.set_sprite("meteor_1s_sprite", "meteors/meteor_1_s.bin");
 
-    asterisk.set_static_body("meteor_object",
+    asterisk.set_sprite("meteor_5s_sprite", "meteors/meteor_5_s.bin");
+
+    asterisk.set_sprite("meteor_6l_sprite", "meteors/meteor_6_l.bin");
+
+    asterisk.set_sprite("meteor_2l_sprite", "meteors/meteor_6_l.bin");
+    asterisk.set_sprite("meteor_2s_sprite", "meteors/meteor_6_s.bin");
+
+    asterisk.set_dynamic_body("meteor_object_1",
+        {
+            .position = { 6.0f,    1.51f },
+            .velocity = { -7.555f, 0.0f  },
+            .width = px_to_units(65.0f, 65.0f),
+            .mass = 1.0f,
+            .is_sensor = true
+    });
+
+    asterisk.set_dynamic_body("meteor_object_2",
         {
             .position = { 3.32f, 1.51f },
             .velocity = { 0.0f,  0.0f  },
-            .width = { 4.0f,  2.0f  },
+            .width = px_to_units(65.0f, 57.0f),
+            .mass = 1.0f,
             .is_sensor = true
     });
+
+    asterisk.set_dynamic_body("meteor_object_3",
+        {
+            .position = { 3.32f, 1.51f },
+            .velocity = { 0.0f,  0.0f  },
+            .width = px_to_units(62.0f, 65.0f),
+            .mass = 3.0f,
+            .is_sensor = true
+    });
+
+    // @TODO: hit counter in state machine
+    asteriods_.objects["meteor_object_1"].start(
+        asteriods::L_State{ &asterisk.get_body("meteor_object_1").width });
+    asteriods_.objects["meteor_object_2"].start(
+        asteriods::XL_State{ &asterisk.get_body("meteor_object_2").width });
+    asteriods_.objects["meteor_object_3"].start(
+        asteriods::L_State{ &asterisk.get_body("meteor_object_3").width });
 }
 
 PULSE_ON_GAMESCENE(Level_One)
@@ -115,10 +181,10 @@ PULSE_ON_GAMESCENE(Level_One)
     }
 
     asterisk.draw("ship_object", "ship_sprite");
-    asterisk.draw("meteor_object", "meteor_sprite");
+    asterisk.draw("meteor_object_1", "meteor_1m_sprite");
 
     asterisk.render_pool("laser_gun", [&](pulse2d_body* laser_object) {
-        pulse2d_body& meteor = asterisk.get_body("meteor_object");
+        pulse2d_body& meteor = asterisk.get_body("meteor_object_1");
 
         if (laser_object->position.x > 6.67f or
             laser_object->position.x < -10.0f) {
