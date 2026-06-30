@@ -3,6 +3,7 @@
         {
             "includePath": [
                 "${workspaceFolder}/**",
+                "include/",
                 "${env:TEENSY_HW}/cores/teensy4",
                 "${env:TEENSY_HW}/libraries/**",
                 "${env:ETL_INCLUDE}/**"
