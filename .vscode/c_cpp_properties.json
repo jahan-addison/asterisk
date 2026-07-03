@@ -4,6 +4,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "include/",
+                "ext/pulse2d",
+                "ext/pulse2d/external",
                 "${env:TEENSY_HW}/cores/teensy4",
                 "${env:TEENSY_HW}/libraries/**",
                 "${env:ETL_INCLUDE}/**"

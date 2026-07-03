@@ -1,4 +1,4 @@
-# asterisk*
+# 🛸 asterisk 🛸
 
 ```
  (`-')  _  (`-').->(`-')      (`-')  _   (`-')   _      (`-').-><-.(`-')
@@ -11,7 +11,7 @@
  `--' `--' `-----'    `--'    `------'`--' '--' `--'    `-----' `--' '--'
 ```
 
-> Asteroids space-shooter game for the Teensy 4.1 using the [Pulse2D Game Engine](https://github.com/jahan-addison/pulse2d)
+> Asteroids space-shooter game for the Teensy 4.1 using the [Pulse2D Game Engine](https://github.com/jahan-addison/pulse2d) 🎮
 
 ![gif](/assets/demo/V1/Asterisk%20Game%20Demo%20V1-GIF.gif)
 
