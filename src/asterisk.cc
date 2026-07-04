@@ -11,14 +11,12 @@ namespace gameover = scenes::menus::gameover;
 PULSE2D_START_PULSE();
 
 PULSE_DEFINE_SCENE(Menu, 4, 4);
-PULSE_DEFINE_SCENE(Level_One, 9, 2);
-PULSE_DEFINE_SCENE(Level_Two, 9, 2);
-PULSE_DEFINE_SCENE(Level_Three, 9, 2);
-PULSE_DEFINE_SCENE(Game_Over, 1, 1);
+PULSE_DEFINE_SCENE(Game_Over, 1, 2);
+PULSE_DEFINE_SCENE(Level_One, 7, 2);
+PULSE_DEFINE_SCENE(Level_Two, 7, 2);
+PULSE_DEFINE_SCENE(Level_Three, 7, 2);
 
-PULSE_INIT_GAME(asterisk, Menu, Level_One, Level_Two, Level_Three, Game_Over);
-
-PULSE_FWD_DECLARE_SCENE(Game_Over);
+PULSE_INIT_GAME(asterisk, Menu, Game_Over, Level_One, Level_Two, Level_Three);
 
 PULSE_DEFINE_ANIMATOR(ship_animator);
 PULSE_ANIMATION_DEFINITION(ship_thrust, animated_ship, 44, 39, 8, 60);
@@ -28,7 +26,7 @@ PULSE_ANIMATION_DEFINITION(ship_thrust, animated_ship, 44, 39, 8, 60);
 
 /**
  * @brief
- * First level Scene Start
+ * First level Start
  *
  * @scope: Level_One
  */
@@ -49,12 +47,9 @@ PULSE_ON_GAMESCENE(Level_One)
 
     register_animation(ship_animator, ship_thrust);
 
-    level_one::on_level_one_tick(
-        asterisk,
-        ship,
-        [] { PULSE_SET_SCENE(asterisk, Level_One); }, // on_reset
-        // @TODO: Fix
-        [] { PULSE_SET_SCENE(asterisk, Game_Over); }); // on_gameover
+    level_one::on_level_one_tick(asterisk, ship, [] {
+        PULSE_DEFER_SCENE(asterisk, Game_Over);
+    }); // on_gameover
 
     asterisk.tick_animation(ship_animator, "ship_sprite");
     asterisk.tick_vfx();
@@ -78,9 +73,8 @@ PULSE_ON_GAMESCENE_START(Game_Over)
 PULSE_ON_GAMESCENE(Game_Over)
 {
     asterisk.tick();
-    asterisk.render_backgrounds();
     gameover::on_gameover_tick(
-        asterisk, [] { PULSE_SET_SCENE(asterisk, Level_One); });
+        asterisk, [] { PULSE_SET_SCENE(asterisk, Level_One); }); // on_reset
     asterisk.render();
 }
 

@@ -7,7 +7,6 @@
 #include "blue-nebula-bg.h"
 #include "blue-planet-bg.h"
 #include "blue-stars-bg.h"
-#include "gameover-1.h"
 
 /**
  * @brief

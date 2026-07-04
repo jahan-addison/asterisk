@@ -26,17 +26,7 @@
  */
 PULSE_SCENE_FN void set_blue_health_bar(pulse2d_scene_runtime<Scenes...>& game)
 {
-    game.set_static_body("health_blue",
-            {
-                .position = { -4.0f, 3.5f },
-                .width = { 0.5f,  0.5f },
-                .is_sensor = true
-    })
-        .set_static_body("blue_health_bar",
-            { .position = { -2.0f, 3.5f },
-                .width = { 3.0f, 0.5f },
-                .is_sensor = true })
-        .set_sprite_embedded("health-blue", health_blue, 57, 22)
+    game.set_sprite_embedded("health-blue", health_blue, 57, 22)
         .set_sprite_embedded("blue-health-bar-1", blue_health_bar_1, 100, 22)
         .set_sprite_embedded("blue-health-bar-2", blue_health_bar_2, 100, 22)
         .set_sprite_embedded("blue-health-bar-3", blue_health_bar_3, 100, 22)
@@ -52,17 +42,7 @@ PULSE_SCENE_FN void set_blue_health_bar(pulse2d_scene_runtime<Scenes...>& game)
  */
 PULSE_SCENE_FN void set_red_health_bar(pulse2d_scene_runtime<Scenes...>& game)
 {
-    game.set_static_body("health_red",
-            {
-                .position = { 1.98f, -3.5f },
-                .width = { 0.5f,  0.5f  },
-                .is_sensor = true
-    })
-        .set_static_body("red_health_bar",
-            { .position = { 3.98f, -3.5f },
-                .width = { 3.0f, 0.5f },
-                .is_sensor = true })
-        .set_sprite_embedded("health-red", health_red, 57, 22)
+    game.set_sprite_embedded("health-red", health_red, 57, 22)
         .set_sprite_embedded("red-health-bar-1", red_health_bar_1, 100, 22)
         .set_sprite_embedded("red-health-bar-2", red_health_bar_2, 100, 22)
         .set_sprite_embedded("red-health-bar-3", red_health_bar_3, 100, 22)
@@ -79,25 +59,27 @@ PULSE_SCENE_FN void set_red_health_bar(pulse2d_scene_runtime<Scenes...>& game)
 PULSE_SCENE_FN void draw_blue_health_bar(pulse2d_scene_runtime<Scenes...>& game,
     int health = 5)
 {
-    game.draw("health_blue", "health-blue");
+    auto [sx, sy] = units_to_pixels(-5.0f, 3.8f);
+    auto [sx_1, sy_1] = units_to_pixels(-3.7f, 3.79f);
+    game.draw_sprite("health-blue", sx, sy);
     switch (health) {
         case 5:
-            game.draw("blue_health_bar", "blue-health-bar-1");
+            game.draw_sprite("blue-health-bar-1", sx_1, sy_1);
             break;
         case 4:
-            game.draw("blue_health_bar", "blue-health-bar-2");
+            game.draw_sprite("blue-health-bar-2", sx_1, sy_1);
             break;
         case 3:
-            game.draw("blue_health_bar", "blue-health-bar-3");
+            game.draw_sprite("blue-health-bar-3", sx_1, sy_1);
             break;
         case 2:
-            game.draw("blue_health_bar", "blue-health-bar-4");
+            game.draw_sprite("blue-health-bar-4", sx_1, sy_1);
             break;
         case 1:
-            game.draw("blue_health_bar", "blue-health-bar-5");
+            game.draw_sprite("blue-health-bar-5", sx_1, sy_1);
             break;
         default:
-            game.draw("blue_health_bar", "blue-health-bar-5");
+            game.draw_sprite("blue-health-bar-5", sx_1, sy_1);
             break;
     }
 }
@@ -111,25 +93,27 @@ PULSE_SCENE_FN void draw_blue_health_bar(pulse2d_scene_runtime<Scenes...>& game,
 PULSE_SCENE_FN void draw_red_health_bar(pulse2d_scene_runtime<Scenes...>& game,
     int health = 5)
 {
-    game.draw("health_red", "health-red");
+    auto [sx, sy] = units_to_pixels(0.5f, -3.0f);
+    auto [sx_1, sy_1] = units_to_pixels(1.8f, -3.05f);
+    game.draw_sprite("health-red", sx, sy);
     switch (health) {
         case 5:
-            game.draw("red_health_bar", "red-health-bar-1");
+            game.draw_sprite("red-health-bar-1", sx_1, sy_1);
             break;
         case 4:
-            game.draw("red_health_bar", "red-health-bar-2");
+            game.draw_sprite("red-health-bar-2", sx_1, sy_1);
             break;
         case 3:
-            game.draw("red_health_bar", "red-health-bar-3");
+            game.draw_sprite("red-health-bar-3", sx_1, sy_1);
             break;
         case 2:
-            game.draw("red_health_bar", "red-health-bar-4");
+            game.draw_sprite("red-health-bar-4", sx_1, sy_1);
             break;
         case 1:
-            game.draw("red_health_bar", "red-health-bar-5");
+            game.draw_sprite("red-health-bar-5", sx_1, sy_1);
             break;
         default:
-            game.draw("red_health_bar", "red-health-bar-5");
+            game.draw_sprite("red-health-bar-5", sx_1, sy_1);
             break;
     }
 }

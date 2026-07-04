@@ -75,6 +75,9 @@ PULSE2D_INLINE pulse2d_math::Vec2 get_size_by_pixel(Size size,
 ///////////////////////////////////////////////////////////////////////////////
 // Events
 
+// zero-th impact amount before size increase
+#define IMPACT_DECRESE_COUNT 1
+
 struct Spawn_Event
 {
     Size size;
@@ -146,7 +149,7 @@ struct asteroid_sm
         using namespace sml;
 
         auto will_erase = [](Live_Data const& d) -> bool {
-            if (d.hits < 2)
+            if (d.hits < IMPACT_DECRESE_COUNT)
                 return false;
             auto c = static_cast<int>(d.current_size);
             Size next =
@@ -165,7 +168,7 @@ struct asteroid_sm
         };
 
         auto on_impact = [](Live_Data& d) {
-            if (d.hits >= 2) {
+            if (d.hits >= IMPACT_DECRESE_COUNT) {
                 auto c = static_cast<int>(d.current_size);
                 if (c > 0 and c <= 4)
                     d.current_size = static_cast<Size>(c + 1);
@@ -203,7 +206,8 @@ struct asteroid_sm
              state<Live>    + event<Crash_Event>                              = state<Crashed>,
              state<Live>    + event<Evaded_Event> [ will_evade]               = state<Evaded>,
              state<Erased>  + on_entry<_> / [](Asteroid_Config const& cfg) {
-                 cfg.body->set_width({ 0.0f, 0.0f });
+                 cfg.body->set_width({ 0.0f, 0.0f })
+                    .set_position({-5.0f, -5.0f});
              }
         );
         // clang-format on
@@ -250,7 +254,7 @@ class Asteroid_Manager
     PULSE2D_INLINE Asteroid_Controller& get(size_t i) { return objects.at(i); }
 
     // Pick the next asteroid index, excluding current. Drains a Fisher-Yates
-    // shuffled pool of the remaining N-1 indices; refills when exhausted.
+    // shuffled pool of the remaining N-1 indices, refills when exhausted.
     PULSE2D_INLINE size_t pick_next(size_t current)
     {
         if (pool_head_ == 0) {

@@ -27,7 +27,7 @@ struct State
     int current_health = 5;
     int current_asteroid = 0;
     int total_missed = 0;
-    float velocity_ratio = 1.0f;
+    float velocity_ratio = 1.485f;
     asteroid::Asteroid_Manager<4> asteroids{};
 
     pulse2d_body* collided_obj = nullptr;
@@ -39,6 +39,23 @@ PULSE_DEFINE_SCENE_STATE(State);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utilities
+
+/**
+ * @brief
+ * Clear state
+ *
+ * @scope: on_level_one_tick
+ */
+PULSE2D_INLINE void reset()
+{
+    state.current_health = 4;
+    state.current_asteroid = 0;
+    state.total_missed = 0;
+    state.velocity_ratio = 1.0f;
+    state.asteroids.reset_all();
+    state.collided_obj = nullptr;
+    state.draw = nullptr;
+}
 
 /**
  * @brief
@@ -170,17 +187,16 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
  */
 PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
     pulse2d_body& ship,
-    void (*on_reset)(),
     void (*on_gameover)())
 {
     PULSE_POLL_SEESAW_GAMEPAD();
 
     game.set_arcade_directional_inverted_control("ship_object", 12.55f, true);
 
-    if (SEESAW_BUTTON_INPUT(SEESAW_START)) {
-        state.asteroids.reset_all();
-        state.current_asteroid = 0;
-        on_reset();
+    if (SEESAW_BUTTON_INPUT(SEESAW_SELECT)) {
+        reset();
+        on_gameover();
+        return;
     }
 
     if (SEESAW_BUTTON_INPUT(SEESAW_A)) {
@@ -207,20 +223,15 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
 
     current.dispatch(asteroid::Render_Event{});
 
-    if (current.config().body->position.x < -7.0f)
+    if (current.config().body->position.x < -7.5f)
         current.dispatch(asteroid::Evaded_Event{});
 
     if (current.is<asteroid::Erased>() or current.is<asteroid::Evaded>()) {
-        Serial.printf("total missed: %d\n", state.total_missed);
-        if (current.is<asteroid::Evaded>()) {
+        if (current.is<asteroid::Evaded>() and state.collided_obj == nullptr) {
             state.total_missed++;
-            if (state.collided_obj != nullptr) {
-                state.collided_obj = nullptr;
-            }
-            if (state.total_missed > 1) {
-                state.current_health--;
-                state.total_missed = 0;
-            }
+        }
+        if (state.collided_obj != nullptr) {
+            state.collided_obj = nullptr;
         }
         auto next = state.asteroids.pick_next(
             static_cast<size_t>(state.current_asteroid));
@@ -257,8 +268,10 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
             });
     });
 
-    if (state.current_health <= 0)
+    if (state.current_health <= 0) {
+        reset();
         on_gameover();
+    }
 }
 
 } // namespace scenes::levels::level_one
