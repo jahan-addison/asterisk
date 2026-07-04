@@ -3,6 +3,8 @@
 #include PULSE2D_HEADER
 #include PULSE2D_GRAPHICS
 
+#include <common.h>
+
 #include <events/asteroids.h>
 
 #include <sprites/asteroids/asteroid_1_l.h>
@@ -18,71 +20,34 @@
 #include <sprites/asteroids/asteroid_7_m.h>
 #include <sprites/asteroids/asteroid_7_s.h>
 
-void set_player_ship();
-
 namespace scenes::levels::level_one {
 
 struct State
 {
+    int current_health = 5;
     int current_asteroid = 0;
+    int total_missed = 0;
     float velocity_ratio = 1.0f;
     asteroid::Asteroid_Manager<4> asteroids{};
+
+    pulse2d_body* collided_obj = nullptr;
+
     pulse2d::state::Draw_Fn draw = nullptr;
 };
 
 PULSE_DEFINE_SCENE_STATE(State);
 
-///////////////////
-// Setup helpers //
-///////////////////
-
-/**
- * @brief
- * Set a blue parallax background
- *
- * @scope: PULSE_ON_GAMESCENE_START
- */
-PULSE_SCENE_FN void set_blue_background(pulse2d_scene_runtime<Scene>& game)
-{
-    game.set_background_sprite("sprite_nebula", bg_1, 320, 240)
-        .set_background_sprite("sprite_stars", bg_2, 320, 240)
-        .set_background_sprite("sprite_planets", bg_3, 320, 240)
-        .set_background_sprite("sprite_dust", bg_4, 320, 240)
-        .add_parallax_layer("sprite_nebula", 320.0f, 15.0f)
-        .add_parallax_layer("sprite_stars", 320.0f, 20.0f)
-        .add_parallax_layer("sprite_planets", 320.0f, 40.0f)
-        .add_parallax_layer("sprite_dust", 320.0f, 50.0f);
-}
-
-/**
- * @brief
- * Set the static walls objects
- *
- * @scope: PULSE_ON_GAMESCENE_START
- */
-PULSE_SCENE_FN void set_static_walls(pulse2d_scene_runtime<Scene>& game)
-{
-    game.set_static_body("top_wall",
-            {
-                .position = { -4.5f, 4.0f },
-                  .width = { 2.0f,  0.5f }
-    })
-        .set_static_body("bottom_wall",
-            { .position = { -4.5f, -4.0f }, .width = { 2.0f, 0.5f } });
-}
-
-///////////////
-// Collision //
-///////////////
+///////////////////////////////////////////////////////////////////////////////
+// Utilities
 
 /**
  * @brief
  * Dispatch impact event on laser collision with an asteroid.
  *
- * @scope: on_level_one_tick
+ * @scope: PULSE_ON_GAMESCENE
  */
 PULSE_SCENE_FN void kinematic_laser_collided_asteroid(
-    pulse2d_scene_runtime<Scene>& game,
+    pulse2d_scene_runtime<Scenes...>& game,
     pulse2d_body* laser_object,
     size_t index)
 {
@@ -93,26 +58,25 @@ PULSE_SCENE_FN void kinematic_laser_collided_asteroid(
     game.despawn("laser_gun", laser_object);
 }
 
-/////////////////////
-// Scene lifecycle //
-/////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// Lifecycle
 
 /**
  * @brief
- * Initialize all level-one bodies, sprites, and asteroid configs.
- * draw_fn must be a non-capturing lambda referencing the global runtime -
- * it is stored in state and forwarded to every Asteroid_Config.
+ * Initialize all level-one bodies, sprites, and asteroid configs
+ * draw_fn must be a non-capturing lambda referencing the global runtime
  *
  * @scope: PULSE_ON_GAMESCENE_START(Level_One)
  */
-PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scene>& game,
+PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
     pulse2d::state::Draw_Fn draw_fn)
 {
     state.draw = draw_fn;
 
     set_blue_background(game);
     set_static_walls(game);
-    set_player_ship();
+    set_player_ship(game);
+    set_blue_health_bar(game);
 
     // clang-format off
     game
@@ -204,9 +168,10 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scene>& game,
  *
  * @scope: PULSE_ON_GAMESCENE(Level_One)
  */
-PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scene>& game,
+PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
     pulse2d_body& ship,
-    void (*on_reset)())
+    void (*on_reset)(),
+    void (*on_gameover)())
 {
     PULSE_POLL_SEESAW_GAMEPAD();
 
@@ -229,6 +194,8 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scene>& game,
 
     game.draw("ship_object", "ship_sprite");
 
+    draw_blue_health_bar(game, state.current_health);
+
     etl::array<pulse2d_body*, 4> as_body = {
         &game.get_body("asteroid_object_1"),
         &game.get_body("asteroid_object_2"),
@@ -236,21 +203,46 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scene>& game,
         &game.get_body("asteroid_object_4"),
     };
 
-    state.asteroids.get(state.current_asteroid)
-        .dispatch(asteroid::Render_Event{});
+    auto& current = state.asteroids.get(state.current_asteroid);
 
-    if (state.asteroids.get(state.current_asteroid).is<asteroid::Erased>()) {
+    current.dispatch(asteroid::Render_Event{});
+
+    if (current.config().body->position.x < -7.0f)
+        current.dispatch(asteroid::Evaded_Event{});
+
+    if (current.is<asteroid::Erased>() or current.is<asteroid::Evaded>()) {
+        Serial.printf("total missed: %d\n", state.total_missed);
+        if (current.is<asteroid::Evaded>()) {
+            state.total_missed++;
+            if (state.collided_obj != nullptr) {
+                state.collided_obj = nullptr;
+            }
+            if (state.total_missed > 1) {
+                state.current_health--;
+                state.total_missed = 0;
+            }
+        }
         auto next = state.asteroids.pick_next(
             static_cast<size_t>(state.current_asteroid));
         state.current_asteroid = static_cast<int>(next);
         state.asteroids.respawn(next);
     }
 
-    // @TODO: Explode ship on_collision_with_body(ship)
+    game.on_collision_with("ship_object", [&](pulse2d_body* obj) {
+        for (auto* i_obj : as_body) {
+            if (state.collided_obj != nullptr and state.collided_obj == i_obj)
+                break;
+            if (obj == i_obj and state.current_health > 0) {
+                state.collided_obj = i_obj;
+                state.current_health--;
+                break;
+            }
+        }
+    });
 
     game.render_pool("laser_gun", [&](pulse2d_body* laser_object) {
         if (laser_object->position.x > 6.67f or
-            laser_object->position.x < -10.0f) {
+            laser_object->position.x < -6.0f) {
             game.despawn("laser_gun", laser_object);
         } else {
             game.draw_body(laser_object, "laser_sprite");
@@ -264,6 +256,9 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scene>& game,
                 }
             });
     });
+
+    if (state.current_health <= 0)
+        on_gameover();
 }
 
 } // namespace scenes::levels::level_one

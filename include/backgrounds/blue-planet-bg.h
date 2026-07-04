@@ -4,11 +4,11 @@
 
 #include <cstdint>
 
-static constexpr uint16_t bg_3_width = 320;
-static constexpr uint16_t bg_3_height = 240;
+static constexpr uint16_t blue_bg_3_width = 320;
+static constexpr uint16_t blue_bg_3_height = 240;
 
-__attribute__((
-    section(".progmem"))) static constexpr uint16_t bg_3[320 * 240] = { 0xF81F,
+__attribute__((section(
+    ".progmem"))) static constexpr uint16_t blue_bg_3[320 * 240] = { 0xF81F,
     0xF81F,
     0xF81F,
     0xF81F,

@@ -84,6 +84,8 @@ struct Impact_Event
 {};
 struct Crash_Event
 {};
+struct Evaded_Event
+{};
 struct Render_Event
 {};
 
@@ -97,6 +99,8 @@ struct Live
 struct Erased
 {};
 struct Crashed
+{};
+struct Evaded
 {};
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -172,6 +176,10 @@ struct asteroid_sm
             }
         };
 
+        auto will_evade = [](Live_Data const&, Asteroid_Config const& cfg) {
+            return cfg.body->position.x < -5.0f;
+        };
+
         auto on_render = [](Live_Data const& d, Asteroid_Config const& cfg) {
             if (d.current_size == Size::S) {
                 cfg.body->set_width({ cfg.width_s.x, cfg.width_s.y });
@@ -187,12 +195,13 @@ struct asteroid_sm
 
         // clang-format off
         return make_transition_table(
-            *state<Spawned> + event<Spawn_Event>                            / on_spawn  = state<Live>,
-             state<Spawned> + event<Crash_Event>                                        = state<Crashed>,
-             state<Live>    + event<Render_Event>                           / on_render,
-             state<Live>    + event<Impact_Event> [ will_erase] / on_impact             = state<Erased>,
+            *state<Spawned> + event<Spawn_Event>                / on_spawn    = state<Live>,
+             state<Spawned> + event<Crash_Event>                              = state<Crashed>,
+             state<Live>    + event<Render_Event>               / on_render,
+             state<Live>    + event<Impact_Event> [ will_erase] / on_impact   = state<Erased>,
              state<Live>    + event<Impact_Event> [!will_erase] / on_impact,
-             state<Live>    + event<Crash_Event>                                        = state<Crashed>,
+             state<Live>    + event<Crash_Event>                              = state<Crashed>,
+             state<Live>    + event<Evaded_Event> [ will_evade]               = state<Evaded>,
              state<Erased>  + on_entry<_> / [](Asteroid_Config const& cfg) {
                  cfg.body->set_width({ 0.0f, 0.0f });
              }
