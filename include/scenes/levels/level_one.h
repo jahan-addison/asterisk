@@ -7,6 +7,9 @@
 
 #include <events/asteroids.h>
 
+#include <backgrounds/pause-no.h>
+#include <backgrounds/pause-yes.h>
+
 #include <sprites/asteroids/asteroid_1_l.h>
 #include <sprites/asteroids/asteroid_1_m.h>
 #include <sprites/asteroids/asteroid_1_s.h>
@@ -27,6 +30,7 @@ struct State
     int current_health = 5;
     int current_asteroid = 0;
     int total_missed = 0;
+    elapsedMillis timer = 0;
     float velocity_ratio = 1.485f;
     asteroid::Asteroid_Manager<4> asteroids{};
 
@@ -51,6 +55,7 @@ PULSE2D_INLINE void reset()
     state.current_health = 4;
     state.current_asteroid = 0;
     state.total_missed = 0;
+    state.timer = 0;
     state.velocity_ratio = 1.0f;
     state.asteroids.reset_all();
     state.collided_obj = nullptr;
@@ -109,6 +114,8 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
         .set_sprite_embedded("asteroid_2l_sprite", asteroid_2_l, 65, 58) // 2
         .set_sprite_embedded("asteroid_2m_sprite", asteroid_2_m, 45, 40)
         .set_sprite_embedded("asteroid_2s_sprite", asteroid_2_s, 25, 22)
+        .set_background_sprite("pause_screen_yes", pause_yes, 320, 240)
+        .set_background_sprite("pause_screen_no", pause_no, 320, 240)
         .set_dynamic_body("asteroid_object_1",
             { .position = { 20.0f, 0.0f }, .velocity = { 0.0f, 0.0f },
               .width = px_to_units(65.0f, 65.0f), .mass = 1.0f, .is_sensor = true })
@@ -187,7 +194,8 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
  */
 PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
     pulse2d_body& ship,
-    void (*on_gameover)())
+    void (*on_gameover)(),
+    [[maybe_unused]] void (*on_next_level)())
 {
     PULSE_POLL_SEESAW_GAMEPAD();
 
@@ -272,6 +280,11 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
         reset();
         on_gameover();
     }
+
+    // if (state.timer >= 1000 * 60) {
+    //     reset();
+    //     on_next_level();
+    // }
 }
 
 } // namespace scenes::levels::level_one

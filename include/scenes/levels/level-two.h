@@ -1,5 +1,5 @@
 #pragma once
 
-// @TODO: Second level idea - A VERY large object flying at you that you must
-// shoot a number of times, with suicide bombers and missiles flying at you that
-// you must dodge
+// @TODO: Second level idea - A VERY large object that flies into the screen
+// that you shoot a number of times, with lasers and missiles shooting at you
+// that you must dodge
