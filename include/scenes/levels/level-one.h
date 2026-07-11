@@ -31,7 +31,8 @@ struct State
     int current_asteroid = 0;
     int total_missed = 0;
     elapsedMillis timer = 0;
-    float velocity_ratio = 1.485f;
+    elapsedMillis intro = 0;
+    float velocity_ratio = 1.400f; // 1.485f;
     asteroid::Asteroid_Manager<4> asteroids{};
 
     pulse2d_body* collided_obj = nullptr;
@@ -52,14 +53,14 @@ PULSE_DEFINE_SCENE_STATE(State);
  */
 PULSE2D_INLINE void reset()
 {
-    state.current_health = 4;
+    state.current_health = 5;
     state.current_asteroid = 0;
     state.total_missed = 0;
     state.timer = 0;
-    state.velocity_ratio = 1.0f;
+    state.intro = 0;
+    state.velocity_ratio = 1.400f;
     state.asteroids.reset_all();
     state.collided_obj = nullptr;
-    state.draw = nullptr;
 }
 
 /**
@@ -94,7 +95,6 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
     pulse2d::state::Draw_Fn draw_fn)
 {
     state.draw = draw_fn;
-
     set_blue_background(game);
     set_static_walls(game);
     set_player_ship(game);
@@ -199,13 +199,15 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
 {
     PULSE_POLL_SEESAW_GAMEPAD();
 
-    game.set_arcade_directional_inverted_control("ship_object", 12.55f, true);
-
-    if (SEESAW_BUTTON_INPUT(SEESAW_SELECT)) {
-        reset();
-        on_gameover();
-        return;
+    if (state.intro < 12500) {
+        game.draw_text("Destroy the asteroids and protect the base!",
+            10,
+            210,
+            game.color(pulse2d_color::White),
+            1.2222f);
     }
+
+    game.set_arcade_directional_inverted_control("ship_object", 12.55f, true);
 
     if (SEESAW_BUTTON_INPUT(SEESAW_A)) {
         game.spawn("laser_gun",
@@ -237,6 +239,10 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
     if (current.is<asteroid::Erased>() or current.is<asteroid::Evaded>()) {
         if (current.is<asteroid::Evaded>() and state.collided_obj == nullptr) {
             state.total_missed++;
+        }
+        if (state.total_missed >= 2) {
+            state.current_health--;
+            state.total_missed = 0;
         }
         if (state.collided_obj != nullptr) {
             state.collided_obj = nullptr;
@@ -281,10 +287,10 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
         on_gameover();
     }
 
-    // if (state.timer >= 1000 * 60) {
-    //     reset();
-    //     on_next_level();
-    // }
+    if (state.timer >= 1000 * 35) {
+        reset();
+        on_next_level();
+    }
 }
 
 } // namespace scenes::levels::level_one

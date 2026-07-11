@@ -5,28 +5,34 @@
 #include <backgrounds/pause-no.h>
 #include <backgrounds/pause-yes.h>
 
-#include <scenes/levels/level_one.h>
+#include <scenes/levels/level-one.h>
+#include <scenes/levels/level-two.h>
 #include <scenes/menus/gameover.h>
 #include <scenes/menus/start.h>
+#include <scenes/menus/win.h>
 
 namespace level_one = scenes::levels::level_one;
+namespace level_two = scenes::levels::level_two;
 
 namespace gameover = scenes::menus::gameover;
+namespace game_win = scenes::menus::game_win;
 namespace start = scenes::menus::start;
 
 PULSE2D_START_PULSE();
 
 PULSE_DEFINE_SCENE(Start_Screen, 1, 1);
 PULSE_DEFINE_SCENE(Pause_Screen, 1, 2);
-PULSE_DEFINE_SCENE(Game_Over, 1, 4);
+PULSE_DEFINE_SCENE(Game_Won, 1, 2);
+PULSE_DEFINE_SCENE(Game_Over, 1, 2);
 PULSE_DEFINE_SCENE(Level_One, 7, 4);
-PULSE_DEFINE_SCENE(Level_Two, 7, 4);
+PULSE_DEFINE_SCENE(Level_Two, 7, 6);
 PULSE_DEFINE_SCENE(Level_Three, 7, 4);
 
 PULSE_INIT_GAME(asterisk,
     Start_Screen,
     Pause_Screen,
     Game_Over,
+    Game_Won,
     Level_One,
     Level_Two,
     Level_Three);
@@ -41,43 +47,6 @@ struct State
 };
 
 PULSE_DEFINE_SCENE_STATE(State);
-
-///////////////////////////////////////////////////////////////////////////////
-// Level One
-
-/**
- * @brief
- * First level Start
- *
- * @scope: Level_One
- */
-PULSE_ON_GAMESCENE_START(Level_One)
-{
-    level_one::on_level_one_start(
-        asterisk, [](pulse2d_body* body, const char* sprite) {
-            asterisk.draw_body(body, sprite);
-        });
-}
-
-PULSE_ON_GAMESCENE(Level_One)
-{
-    asterisk.tick();
-    asterisk.render_backgrounds();
-
-    pulse2d_body& ship = asterisk.get_body("ship_object");
-
-    register_animation(ship_animator, ship_thrust);
-
-    level_one::on_level_one_tick(
-        asterisk,
-        ship,
-        [] { PULSE_DEFER_SCENE(asterisk, Game_Over); },
-        [] { PULSE_DEFER_SCENE(asterisk, Level_One); }); // next level
-
-    asterisk.tick_animation(ship_animator, "ship_sprite");
-    asterisk.tick_vfx();
-    asterisk.render();
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Start game
@@ -124,6 +93,102 @@ PULSE_ON_GAMESCENE(Game_Over)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Winning screen
+
+/**
+ * @brief
+ * Game Won
+ *
+ * @scope: Game Won
+ */
+PULSE_ON_GAMESCENE_START(Game_Won)
+{
+    game_win::on_game_win_start(asterisk);
+}
+
+PULSE_ON_GAMESCENE(Game_Won)
+{
+    asterisk.tick();
+    game_win::on_game_win_tick(
+        asterisk, [] { PULSE_SET_SCENE(asterisk, Start_Screen); }); // on_reset
+    asterisk.render();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Level One
+
+/**
+ * @brief
+ * First level Start
+ *
+ * @scope: Level_One
+ */
+PULSE_ON_GAMESCENE_START(Level_One)
+{
+    level_one::on_level_one_start(
+        asterisk, [](pulse2d_body* body, const char* sprite) {
+            asterisk.draw_body(body, sprite);
+        });
+}
+
+PULSE_ON_GAMESCENE(Level_One)
+{
+    asterisk.tick();
+    asterisk.render_backgrounds();
+
+    pulse2d_body& ship = asterisk.get_body("ship_object");
+
+    register_animation(ship_animator, ship_thrust);
+
+    level_one::on_level_one_tick(
+        asterisk,
+        ship,
+        [] { PULSE_DEFER_SCENE(asterisk, Game_Over); },
+        [] { PULSE_DEFER_SCENE(asterisk, Level_Two); }); // next level
+
+    asterisk.tick_animation(ship_animator, "ship_sprite");
+    asterisk.tick_vfx();
+    asterisk.render();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Level Two
+
+/**
+ * @brief
+ * Second level Start
+ *
+ * @scope: Level_Two
+ */
+PULSE_ON_GAMESCENE_START(Level_Two)
+{
+    level_two::on_level_two_start(
+        asterisk, [](pulse2d_body* body, const char* sprite) {
+            asterisk.draw_body(body, sprite);
+        });
+}
+
+PULSE_ON_GAMESCENE(Level_Two)
+{
+    asterisk.tick();
+    asterisk.render_backgrounds();
+
+    pulse2d_body& ship = asterisk.get_body("ship_object");
+
+    register_animation(ship_animator, ship_thrust);
+
+    level_two::on_level_two_tick(
+        asterisk,
+        ship,
+        [] { PULSE_DEFER_SCENE(asterisk, Game_Over); },
+        [] { PULSE_DEFER_SCENE(asterisk, Game_Won); }); // next level
+
+    asterisk.tick_animation(ship_animator, "ship_sprite");
+    asterisk.tick_vfx();
+    asterisk.render();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Lifecycle
 
 PULSE_ON_GAMESTART()
@@ -134,7 +199,7 @@ PULSE_ON_GAMESTART()
     pulse_register_etl_error_handler();
     asterisk.init(0.0f, 0.0f, 10);
     PULSE_ENABLE_SEESAW_GAMEPAD();
-    PULSE_SET_SCENE(asterisk, Start_Screen);
+    PULSE_SET_SCENE(asterisk, Level_Two /*Start_Screen*/);
 }
 
 PULSE_ON_GAMELOOP()
@@ -167,5 +232,10 @@ PULSE_ON_GAMELOOP()
         asterisk.render();
         return;
     }
+
+    ///////////////
+    // Game tick //
+    ///////////////
+
     PULSE_TICK_GAMESCENE();
 }
