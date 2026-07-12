@@ -12,7 +12,7 @@
 
 namespace scenes::levels::level_two {
 
-inline constexpr int k_hits_per_health = 20;
+inline constexpr int k_hits_per_health = 50;
 
 struct State
 {
@@ -45,6 +45,15 @@ PULSE2D_INLINE void reset()
     state.intro = 0;
     state.fire_cooldown = 0;
     state.boss_spawn = false;
+}
+
+PULSE2D_INLINE void on_pause_resume(uint32_t duration)
+{
+    auto freeze = [duration](elapsedMillis& t) {
+        t = ((uint32_t)t > duration) ? (uint32_t)t - duration : 0u;
+    };
+    freeze(state.intro);
+    freeze(state.fire_cooldown);
 }
 
 /**
@@ -132,17 +141,29 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
 
     auto& enemy = game.get_body("boss_enemy");
 
+    ///////////////////
+    // intro message //
+    ///////////////////
+
     if (state.intro < 9000) {
         game.draw_text_centered("defeat the dreadnaught!",
             200,
             game.color(pulse2d_color::Maroon),
-            1.6222f);
+            1.6f);
     }
+
+    ////////////////////////////////
+    // spawn boss once intro ends //
+    ////////////////////////////////
 
     if (state.intro > 10000 and not state.boss_spawn) {
         enemy.set_position({ 4.0f, 0.0f });
         state.boss_spawn = true;
     }
+
+    //////////////
+    // enemy AI //
+    //////////////
 
     if (state.intro > 13000) {
         draw_red_health_bar(game, state.enemy_health);
@@ -187,6 +208,10 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
         });
     }
 
+    /////////////////////
+    // player controls //
+    /////////////////////
+
     game.set_arcade_directional_inverted_control("ship_object", 12.55f, true);
 
     if (SEESAW_BUTTON_INPUT(SEESAW_A)) {
@@ -198,9 +223,17 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
             0.0f);
     }
 
+    /////////////////
+    // player ship //
+    /////////////////
+
     game.draw("ship_object", "ship_sprite");
 
     draw_blue_health_bar(game, state.current_health);
+
+    ///////////////////////
+    // player laser pool //
+    ///////////////////////
 
     game.render_pool("laser_gun", [&](pulse2d_body* laser_object) {
         if (laser_object->position.x > 6.67f or
@@ -215,6 +248,10 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
             }
         });
     });
+
+    ///////////////////
+    // health checks //
+    ///////////////////
 
     if (state.current_health <= 0) {
         reset();

@@ -20,7 +20,7 @@ namespace scenes::levels::level_three {
 
 // clang-format off
 
-inline constexpr int      k_hits_per_health    = 20;
+inline constexpr int      k_hits_per_health    = 30;
 
 inline constexpr float    k_stage1_speed       = 0.018f;  // units per tick, stage 1
 inline constexpr float    k_stage2_speed       = 0.030f;  // units per tick, stage 2
@@ -45,7 +45,7 @@ struct State
     int enemy_stage = 1;              // current stage: 1, 2, or 3
     int enemy_hit_count = 0;
     float enemy_y = 0.0f;             // enemy y position for vertical oscillation
-    float enemy_dir = 1.0f;           // oscillation direction: +1 or -1
+    float enemy_direction = 1.0f;           // oscillation direction: +1 or -1
     bool boss_spawn = false;
     bool in_transition = false;       // between-stage pause window
     bool player_laser_enabled = true;
@@ -119,7 +119,7 @@ PULSE2D_INLINE void reset()
     state.enemy_stage = 1;
     state.enemy_hit_count = 0;
     state.enemy_y = 0.0f;
-    state.enemy_dir = 1.0f;
+    state.enemy_direction = 1.0f;
     state.boss_spawn = false;
     state.in_transition = false;
     state.player_laser_enabled = true;
@@ -127,6 +127,18 @@ PULSE2D_INLINE void reset()
     state.fire_cooldown = 0;
     state.rocket_cooldown = 0;
     state.side_rocket_timer = 0;
+}
+
+PULSE2D_INLINE void on_pause_resume(uint32_t duration)
+{
+    auto freeze = [duration](elapsedMillis& t) {
+        t = ((uint32_t)t > duration) ? (uint32_t)t - duration : 0u;
+    };
+    freeze(state.intro);
+    freeze(state.fire_cooldown);
+    freeze(state.rocket_cooldown);
+    freeze(state.side_rocket_timer);
+    freeze(state.transition_timer);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -288,7 +300,7 @@ PULSE_SCENE_FN void on_level_three_tick(pulse2d_scene_runtime<Scenes...>& game,
                               ? "... saturn gives me strength ..."
                               : "... you cannot stop me ...";
         game.draw_text_centered(
-            msg, 115, game.color(pulse2d_color::White), 1.2f);
+            msg, 115, game.color(pulse2d_color::White), 1.25f);
 
         draw_red_health_bar(game, state.enemy_health);
         game.draw("enemy_ship", "enemy_sprite");
@@ -319,16 +331,16 @@ PULSE_SCENE_FN void on_level_three_tick(pulse2d_scene_runtime<Scenes...>& game,
     // move enemy (vertical oscillation) //
     ///////////////////////////////////////
 
-    float spd = (state.enemy_stage == 1)   ? k_stage1_speed
-                : (state.enemy_stage == 2) ? k_stage2_speed
-                                           : k_stage3_speed;
-    state.enemy_y += spd * state.enemy_dir;
+    float speed = (state.enemy_stage == 1)   ? k_stage1_speed
+                  : (state.enemy_stage == 2) ? k_stage2_speed
+                                             : k_stage3_speed;
+    state.enemy_y += speed * state.enemy_direction;
     if (state.enemy_y >= k_enemy_y_max) {
         state.enemy_y = k_enemy_y_max;
-        state.enemy_dir = -1.0f;
+        state.enemy_direction = -1.0f;
     } else if (state.enemy_y <= k_enemy_y_min) {
         state.enemy_y = k_enemy_y_min;
-        state.enemy_dir = 1.0f;
+        state.enemy_direction = 1.0f;
     }
     enemy.set_position({ 4.0f, state.enemy_y });
 

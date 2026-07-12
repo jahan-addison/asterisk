@@ -22,6 +22,8 @@
 
 namespace scenes::levels::level_one {
 
+inline constexpr int k_total_asteroids = 20;
+
 struct State
 {
     int current_health = 5;
@@ -29,7 +31,7 @@ struct State
     int total_missed = 0;
     int total_erased = 0;
     elapsedMillis intro = 0;
-    float velocity_ratio = 1.400f; // 1.485f;
+    float velocity_ratio = 1.410f; // 1.485f;
     asteroid::Asteroid_Manager<4> asteroids{};
 
     pulse2d_body* collided_obj = nullptr;
@@ -58,6 +60,13 @@ PULSE2D_INLINE void reset()
     state.velocity_ratio = 1.400f;
     state.asteroids.reset_all();
     state.collided_obj = nullptr;
+}
+
+PULSE2D_INLINE void on_pause_resume(uint32_t duration)
+{
+    state.intro = ((uint32_t)state.intro > duration)
+                      ? (uint32_t)state.intro - duration
+                      : 0u;
 }
 
 /**
@@ -199,12 +208,20 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
 {
     PULSE_POLL_SEESAW_GAMEPAD();
 
+    ///////////////////
+    // intro message //
+    ///////////////////
+
     if (state.intro < 12500) {
-        game.draw_text_centered("Destroy the asteroids and protect the base!",
+        game.draw_text_centered("protect the base, destroy the asteroids!",
             210,
             game.color(pulse2d_color::White),
-            1.2222f);
+            1.2f);
     }
+
+    /////////////////////
+    // player controls //
+    /////////////////////
 
     game.set_arcade_directional_inverted_control("ship_object", 12.55f, true);
 
@@ -217,9 +234,17 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
             0.0f);
     }
 
+    /////////////////
+    // player ship //
+    /////////////////
+
     game.draw("ship_object", "ship_sprite");
 
     draw_blue_health_bar(game, state.current_health);
+
+    ///////////////////////
+    // asteroid SM / hud //
+    ///////////////////////
 
     etl::array<pulse2d_body*, 4> as_body = {
         &game.get_body("asteroid_object_1"),
@@ -255,6 +280,10 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
         state.asteroids.respawn(next);
     }
 
+    ////////////////////
+    // ship collision //
+    ////////////////////
+
     game.on_collision_with("ship_object", [&](pulse2d_body* obj) {
         for (auto* i_obj : as_body) {
             if (state.collided_obj != nullptr and state.collided_obj == i_obj)
@@ -266,6 +295,10 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
             }
         }
     });
+
+    ///////////////////////
+    // player laser pool //
+    ///////////////////////
 
     game.render_pool("laser_gun", [&](pulse2d_body* laser_object) {
         if (laser_object->position.x > 6.67f or
@@ -284,12 +317,16 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
             });
     });
 
+    ///////////////////
+    // health checks //
+    ///////////////////
+
     if (state.current_health <= 0) {
         reset();
         on_gameover();
     }
 
-    if (state.total_erased >= 10) {
+    if (state.total_erased >= k_total_asteroids) {
         reset();
         on_next_level();
     }

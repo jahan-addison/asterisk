@@ -56,6 +56,7 @@ struct State
     bool game_loading = false;
     bool resume_play = false;
     elapsedMillis load_timer = 0;
+    uint32_t pause_start_ms = 0;
 };
 
 PULSE_DEFINE_SCENE_STATE(State);
@@ -256,7 +257,7 @@ PULSE_ON_GAMESTART()
     asterisk.init(0.0f, 0.0f, 10);
     // asterisk.enable_audio();
     PULSE_ENABLE_SEESAW_GAMEPAD();
-    PULSE_SET_SCENE(asterisk, Level_Three);
+    PULSE_SET_SCENE(asterisk, Level_One);
 }
 
 PULSE_ON_GAMELOOP()
@@ -284,22 +285,30 @@ PULSE_ON_GAMELOOP()
     if (state.game_paused or
         (SEESAW_BUTTON_INPUT(SEESAW_SELECT) and
             not std::holds_alternative<Start_Screen>(asterisk.current_scene))) {
+
+        if (not state.game_paused)
+            state.pause_start_ms = millis();
+
         state.game_paused = true;
 
-        if (state.game_paused) {
-            if (SEESAW_DIRECTION_IS_LEFT())
-                state.resume_play = false;
-            if (SEESAW_DIRECTION_IS_RIGHT())
-                state.resume_play = true;
+        if (SEESAW_DIRECTION_IS_LEFT())
+            state.resume_play = false;
+        if (SEESAW_DIRECTION_IS_RIGHT())
+            state.resume_play = true;
 
-            if (state.resume_play)
-                asterisk.draw_sprite("pause_screen_yes", 0, 0);
-            else
-                asterisk.draw_sprite("pause_screen_no", 0, 0);
+        if (state.resume_play)
+            asterisk.draw_sprite("pause_screen_yes", 0, 0);
+        else
+            asterisk.draw_sprite("pause_screen_no", 0, 0);
 
-            if (state.resume_play and SEESAW_BUTTON_INPUT(SEESAW_A))
-                state.game_paused = false;
+        if (state.resume_play and SEESAW_BUTTON_INPUT(SEESAW_A)) {
+            state.game_paused = false;
+            const uint32_t duration = millis() - state.pause_start_ms;
+            level_one::on_pause_resume(duration);
+            level_two::on_pause_resume(duration);
+            level_three::on_pause_resume(duration);
         }
+
         asterisk.render();
         return;
     }
