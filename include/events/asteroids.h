@@ -24,7 +24,7 @@
  *       .body      = &my_game.get_body("asteroid_1"),
  *       .sprite_m  = "asteroid_1m_sprite",
  *       .sprite_s  = "asteroid_1s_sprite",
- *       .width_m   = px_to_units(65.0f, 65.0f),
+ *       .width_m   = pixels_to_units(65.0f, 65.0f),
  *       .width_s   = asteroid::get_size_by_pixel(
  *          asteroid::Size::S, 65.0f, 65.0f),
  *       .draw      = [](pulse2d_body* b, const char* s) {

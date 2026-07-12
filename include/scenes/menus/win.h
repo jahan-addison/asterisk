@@ -24,7 +24,7 @@ PULSE_DEFINE_SCENE_STATE(State);
  * @brief
  * Game over
  *
- * @scope: PULSE_ON_GAMESCENE_START(Game_Over)
+ * @scope: PULSE_ON_GAMESCENE_START(Game_Won)
  */
 PULSE_SCENE_FN void on_game_win_start(pulse2d_scene_runtime<Scenes...>& game)
 {
@@ -35,9 +35,9 @@ PULSE_SCENE_FN void on_game_win_start(pulse2d_scene_runtime<Scenes...>& game)
 
 /**
  * @brief
- * Per-frame Game over logic: Restart game on start button
+ * Per-frame Winning Scene Logic
  *
- * @scope: PULSE_ON_GAMESCENE(Game_Over)
+ * @scope: PULSE_ON_GAMESCENE(Game_Won)
  */
 PULSE_SCENE_FN void on_game_win_tick(pulse2d_scene_runtime<Scenes...>& game,
     void (*on_reset)())

@@ -8,13 +8,15 @@
 #include "parallax/blue-planet-bg.h"
 #include "parallax/blue-stars-bg.h"
 
-// clang-format off
 #include "parallax/red-nebula-l1.h"
-#include "parallax/red-stars-l2.h"
-#include "parallax/red-satellite01-l4.h"
 #include "parallax/red-planet-l5.h"
+#include "parallax/red-satellite01-l4.h"
 #include "parallax/red-satellite02-l6.h"
-// clang-format on
+#include "parallax/red-stars-l2.h"
+
+#include "parallax/purple-nebula-l1.h"
+#include "parallax/purple-planet-l3.h"
+#include "parallax/purple-stars-l2.h"
 
 /**
  * @brief
@@ -54,4 +56,23 @@ PULSE_SCENE_FN void set_red_background(pulse2d_scene_runtime<Scenes...>& game)
         .add_parallax_layer("red_sprite_satellite01", 320.0f, 50.0f)
         .add_parallax_layer("red_sprite_planet", 320.0f, 65.0f)
         .add_parallax_layer("red_sprite_satellite02", 320.0f, 80.0f);
+}
+
+/**
+ * @brief
+ * Set a purple parallax background
+ *
+ * @scope: PULSE_ON_GAMESCENE_START
+ */
+PULSE_SCENE_FN void set_purple_background(
+    pulse2d_scene_runtime<Scenes...>& game)
+{
+    game.set_background_sprite(
+            "purple_sprite_nebula", purple_nebula_l1, 320, 240)
+        .set_background_sprite("purple_sprite_stars", purple_stars_l2, 320, 240)
+        .set_background_sprite(
+            "purple_sprite_planet", purple_planet_l3, 320, 240)
+        .add_parallax_layer("purple_sprite_nebula", 320.0f, 25.0f)
+        .add_parallax_layer("purple_sprite_stars", 320.0f, 45.0f)
+        .add_parallax_layer("purple_sprite_planet", 320.0f, 85.0f);
 }

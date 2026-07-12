@@ -7,9 +7,6 @@
 
 #include <events/asteroids.h>
 
-#include <backgrounds/pause-no.h>
-#include <backgrounds/pause-yes.h>
-
 #include <sprites/asteroids/asteroid_1_l.h>
 #include <sprites/asteroids/asteroid_1_m.h>
 #include <sprites/asteroids/asteroid_1_s.h>
@@ -30,7 +27,7 @@ struct State
     int current_health = 5;
     int current_asteroid = 0;
     int total_missed = 0;
-    elapsedMillis timer = 0;
+    int total_erased = 0;
     elapsedMillis intro = 0;
     float velocity_ratio = 1.400f; // 1.485f;
     asteroid::Asteroid_Manager<4> asteroids{};
@@ -56,7 +53,7 @@ PULSE2D_INLINE void reset()
     state.current_health = 5;
     state.current_asteroid = 0;
     state.total_missed = 0;
-    state.timer = 0;
+    state.total_erased = 0;
     state.intro = 0;
     state.velocity_ratio = 1.400f;
     state.asteroids.reset_all();
@@ -95,6 +92,8 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
     pulse2d::state::Draw_Fn draw_fn)
 {
     state.draw = draw_fn;
+    state.intro = 0;
+    state.total_erased = 0;
     set_blue_background(game);
     set_static_walls(game);
     set_player_ship(game);
@@ -115,19 +114,20 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
         .set_sprite_embedded("asteroid_2m_sprite", asteroid_2_m, 45, 40)
         .set_sprite_embedded("asteroid_2s_sprite", asteroid_2_s, 25, 22)
         .set_background_sprite("pause_screen_yes", pause_yes, 320, 240)
+        .set_background_sprite("loading_screen", loading_screen, 320, 240)
         .set_background_sprite("pause_screen_no", pause_no, 320, 240)
         .set_dynamic_body("asteroid_object_1",
             { .position = { 20.0f, 0.0f }, .velocity = { 0.0f, 0.0f },
-              .width = px_to_units(65.0f, 65.0f), .mass = 1.0f, .is_sensor = true })
+              .width = pixels_to_units(65.0f, 65.0f), .mass = 1.0f, .is_sensor = true })
         .set_dynamic_body("asteroid_object_2",
             { .position = { 20.0f, 0.0f }, .velocity = { 0.0f, 0.0f },
-              .width = px_to_units(65.0f, 57.0f), .mass = 1.0f, .is_sensor = true })
+              .width = pixels_to_units(65.0f, 57.0f), .mass = 1.0f, .is_sensor = true })
         .set_dynamic_body("asteroid_object_3",
             { .position = { 20.0f, 0.0f }, .velocity = { 0.0f, 0.0f },
-              .width = px_to_units(65.0f, 65.0f), .mass = 1.0f, .is_sensor = true })
+              .width = pixels_to_units(65.0f, 65.0f), .mass = 1.0f, .is_sensor = true })
         .set_dynamic_body("asteroid_object_4",
             { .position = { 20.0f, 0.0f }, .velocity = { 0.0f, 0.0f },
-              .width = px_to_units(65.0f, 58.0f), .mass = 1.0f, .is_sensor = true });
+              .width = pixels_to_units(65.0f, 58.0f), .mass = 1.0f, .is_sensor = true });
 
     state.asteroids
         .add({
@@ -135,9 +135,9 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
             .sprite_l       = "asteroid_1l_sprite",
             .sprite_m       = "asteroid_1m_sprite",
             .sprite_s       = "asteroid_1s_sprite",
-            .width_l        = px_to_units(65.0f, 65.0f),
-            .width_m        = px_to_units(45.0f, 45.0f),
-            .width_s        = px_to_units(25.0f, 25.0f),
+            .width_l        = pixels_to_units(65.0f, 65.0f),
+            .width_m        = pixels_to_units(45.0f, 45.0f),
+            .width_s        = pixels_to_units(25.0f, 25.0f),
             .spawn_velocity = { -10.555f * state.velocity_ratio, 0.0f },
             .draw           = state.draw,
             .spawn_size     = asteroid::Size::L,
@@ -148,9 +148,9 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
             .sprite_l       = "asteroid_5l_sprite",
             .sprite_m       = "asteroid_5m_sprite",
             .sprite_s       = "asteroid_5s_sprite",
-            .width_l        = px_to_units(65.0f, 57.0f),
-            .width_m        = px_to_units(45.0f, 39.0f),
-            .width_s        = px_to_units(25.0f, 22.0f),
+            .width_l        = pixels_to_units(65.0f, 57.0f),
+            .width_m        = pixels_to_units(45.0f, 39.0f),
+            .width_s        = pixels_to_units(25.0f, 22.0f),
             .spawn_velocity = { -10.555f * state.velocity_ratio, 0.0f },
             .draw           = state.draw,
             .spawn_size     = asteroid::Size::L,
@@ -161,9 +161,9 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
             .sprite_l       = "asteroid_7l_sprite",
             .sprite_m       = "asteroid_7m_sprite",
             .sprite_s       = "asteroid_7s_sprite",
-            .width_l        = px_to_units(65.0f, 65.0f),
-            .width_m        = px_to_units(45.0f, 45.0f),
-            .width_s        = px_to_units(25.0f, 25.0f),
+            .width_l        = pixels_to_units(65.0f, 65.0f),
+            .width_m        = pixels_to_units(45.0f, 45.0f),
+            .width_s        = pixels_to_units(25.0f, 25.0f),
             .spawn_velocity = { -7.555f * state.velocity_ratio, 0.0f },
             .draw           = state.draw,
             .spawn_size     = asteroid::Size::L,
@@ -174,9 +174,9 @@ PULSE_SCENE_FN void on_level_one_start(pulse2d_scene_runtime<Scenes...>& game,
             .sprite_l       = "asteroid_2l_sprite",
             .sprite_m       = "asteroid_2m_sprite",
             .sprite_s       = "asteroid_2s_sprite",
-            .width_l        = px_to_units(65.0f, 58.0f),
-            .width_m        = px_to_units(45.0f, 40.0f),
-            .width_s        = px_to_units(25.0f, 22.0f),
+            .width_l        = pixels_to_units(65.0f, 58.0f),
+            .width_m        = pixels_to_units(45.0f, 40.0f),
+            .width_s        = pixels_to_units(25.0f, 22.0f),
             .spawn_velocity = { -6.555f * state.velocity_ratio, 0.0f },
             .draw           = state.draw,
             .spawn_size     = asteroid::Size::L,
@@ -200,8 +200,7 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
     PULSE_POLL_SEESAW_GAMEPAD();
 
     if (state.intro < 12500) {
-        game.draw_text("Destroy the asteroids and protect the base!",
-            10,
+        game.draw_text_centered("Destroy the asteroids and protect the base!",
             210,
             game.color(pulse2d_color::White),
             1.2222f);
@@ -247,6 +246,9 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
         if (state.collided_obj != nullptr) {
             state.collided_obj = nullptr;
         }
+        if (current.is<asteroid::Erased>()) {
+            state.total_erased++;
+        }
         auto next = state.asteroids.pick_next(
             static_cast<size_t>(state.current_asteroid));
         state.current_asteroid = static_cast<int>(next);
@@ -287,7 +289,7 @@ PULSE_SCENE_FN void on_level_one_tick(pulse2d_scene_runtime<Scenes...>& game,
         on_gameover();
     }
 
-    if (state.timer >= 1000 * 35) {
+    if (state.total_erased >= 10) {
         reset();
         on_next_level();
     }

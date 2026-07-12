@@ -7,14 +7,12 @@
 
 #include <common.h>
 
-#include <backgrounds/pause-no.h>
-#include <backgrounds/pause-yes.h>
 #include <enemy/boss-1.h>
 #include <enemy/missile-0.h>
 
 namespace scenes::levels::level_two {
 
-inline constexpr int k_hits_per_health = 10;
+inline constexpr int k_hits_per_health = 20;
 
 struct State
 {
@@ -100,12 +98,13 @@ PULSE_SCENE_FN void on_level_two_start(pulse2d_scene_runtime<Scenes...>& game,
             {
                 .position = { 20.0f, 0.0f },
                 .velocity = {  0.0f, 0.0f },
-                .width    = px_to_units(190.0f, 176.0f),
+                .width    = pixels_to_units(190.0f, 176.0f),
                 .mass     = 5.0f,
                 .is_sensor = true,
             })
         .set_background_sprite("pause_screen_yes", pause_yes, 320, 240)
         .set_background_sprite("pause_screen_no", pause_no, 320, 240)
+        .set_background_sprite("loading_screen", loading_screen, 320, 240)
         .set_sprite_embedded("enemy_sprite", boss_1, boss_1_width, boss_1_height)
         .set_sprite_embedded("enemy_laser_sprite", missile_0, 90, 26)
         .init_pool("enemy_laser",
@@ -134,8 +133,7 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
     auto& enemy = game.get_body("boss_enemy");
 
     if (state.intro < 9000) {
-        game.draw_text("Defeat the Dreadnaught!",
-            60,
+        game.draw_text_centered("defeat the dreadnaught!",
             200,
             game.color(pulse2d_color::Maroon),
             1.6222f);
@@ -149,7 +147,7 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
     if (state.intro > 13000) {
         draw_red_health_bar(game, state.enemy_health);
 
-        // Body stays fixed; sprite rotates on its axis.
+        // Body stays fixed - sprite rotates on its axis.
         const float angle =
             sinf(static_cast<float>(state.intro) * 0.0012f) * 0.35f;
         game.draw("boss_enemy", "enemy_sprite", angle);
@@ -166,6 +164,7 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
             // clang-format off
             constexpr float dx = -2.8f;
             game.spawn("enemy_laser", 0, ex + dx * ca - (-1.5f) * sa, ey + dx * sa + (-1.5f) * ca, -25.0f, 0.0f);
+            // Uncomment for two additional enemy lasers
             // game.spawn("enemy_laser", 0, ex + dx * ca - (-0.75f) * sa, ey + dx * sa + (-0.75f) * ca, -25.0f, 0.0f);
             // game.spawn("enemy_laser", 0, ex + dx * ca - ( 0.75f) * sa, ey + dx * sa + ( 0.75f) * ca, -25.0f, 0.0f);
             game.spawn("enemy_laser", 0, ex + dx * ca - ( 1.5f) * sa, ey + dx * sa + ( 1.5f) * ca, -25.0f, 0.0f);
@@ -189,12 +188,6 @@ PULSE_SCENE_FN void on_level_two_tick(pulse2d_scene_runtime<Scenes...>& game,
     }
 
     game.set_arcade_directional_inverted_control("ship_object", 12.55f, true);
-
-    if (SEESAW_BUTTON_INPUT(SEESAW_SELECT)) {
-        reset();
-        on_gameover();
-        return;
-    }
 
     if (SEESAW_BUTTON_INPUT(SEESAW_A)) {
         game.spawn("laser_gun",

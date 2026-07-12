@@ -14,7 +14,7 @@ namespace scenes::menus::start {
 
 /**
  * @brief
- * Game over
+ * Start Game
  *
  * @scope: PULSE_ON_GAMESCENE_START(Start_Screen)
  */
@@ -25,7 +25,7 @@ PULSE_SCENE_FN void on_start(pulse2d_scene_runtime<Scenes...>& game)
 
 /**
  * @brief
- * Per-frame Game over logic: Restart game on start button
+ * Per-frame Game Start logic
  *
  * @scope: PULSE_ON_GAMESCENE(Start_Screen)
  */

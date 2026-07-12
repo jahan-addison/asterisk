@@ -50,9 +50,9 @@ PULSE_SCENE_FN void on_gameover_tick(pulse2d_scene_runtime<Scenes...>& game,
         state.start_over = true;
 
     if (state.start_over)
-        game.draw_sprite("gameover_screen_no", 0, 0);
-    else
         game.draw_sprite("gameover_screen_yes", 0, 0);
+    else
+        game.draw_sprite("gameover_screen_no", 0, 0);
 
     if (SEESAW_BUTTON_INPUT(SEESAW_A) and state.start_over)
         on_reset();

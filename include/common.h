@@ -3,11 +3,14 @@
 #include PULSE2D_GRAPHICS
 
 #include <backgrounds/backgrounds.h>
-
 #include <sprites/health-bars/health-bars.h>
 
 #include <animations/animated-ship.h>
 #include <animations/laser-collision.h>
+
+#include <backgrounds/loading-screen.h>
+#include <backgrounds/pause-no.h>
+#include <backgrounds/pause-yes.h>
 
 /**
  * @brief

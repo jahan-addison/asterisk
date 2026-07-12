@@ -6,13 +6,19 @@
 #include <backgrounds/pause-yes.h>
 
 #include <scenes/levels/level-one.h>
+#include <scenes/levels/level-three.h>
 #include <scenes/levels/level-two.h>
 #include <scenes/menus/gameover.h>
 #include <scenes/menus/start.h>
 #include <scenes/menus/win.h>
 
+////////////
+// Scenes //
+////////////
+
 namespace level_one = scenes::levels::level_one;
 namespace level_two = scenes::levels::level_two;
+namespace level_three = scenes::levels::level_three;
 
 namespace gameover = scenes::menus::gameover;
 namespace game_win = scenes::menus::game_win;
@@ -24,9 +30,9 @@ PULSE_DEFINE_SCENE(Start_Screen, 1, 1);
 PULSE_DEFINE_SCENE(Pause_Screen, 1, 2);
 PULSE_DEFINE_SCENE(Game_Won, 1, 2);
 PULSE_DEFINE_SCENE(Game_Over, 1, 2);
-PULSE_DEFINE_SCENE(Level_One, 7, 4);
-PULSE_DEFINE_SCENE(Level_Two, 7, 6);
-PULSE_DEFINE_SCENE(Level_Three, 7, 4);
+PULSE_DEFINE_SCENE(Level_One, 7, 5);
+PULSE_DEFINE_SCENE(Level_Two, 7, 7);
+PULSE_DEFINE_SCENE(Level_Three, 9, 7);
 
 PULSE_INIT_GAME(asterisk,
     Start_Screen,
@@ -37,16 +43,29 @@ PULSE_INIT_GAME(asterisk,
     Level_Two,
     Level_Three);
 
+///////////
+// State //
+///////////
+
 PULSE_DEFINE_ANIMATOR(ship_animator);
 PULSE_ANIMATION_DEFINITION(ship_thrust, animated_ship, 44, 39, 8, 60);
 
 struct State
 {
     bool game_paused = false;
+    bool game_loading = false;
     bool resume_play = false;
+    elapsedMillis load_timer = 0;
 };
 
 PULSE_DEFINE_SCENE_STATE(State);
+
+#define PULSE_LOAD_NEXT_SCENE(game, scene) \
+    pending_transition = []() {            \
+        state.load_timer = 0;              \
+        state.game_loading = true;         \
+        PULSE_SET_SCENE(game, scene);      \
+    }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Start game
@@ -66,7 +85,7 @@ PULSE_ON_GAMESCENE(Start_Screen)
 {
     asterisk.tick();
     start::on_start_tick(
-        asterisk, [] { PULSE_SET_SCENE(asterisk, Level_One); });
+        asterisk, [] { PULSE_LOAD_NEXT_SCENE(asterisk, Level_One); });
     asterisk.render();
 }
 
@@ -144,7 +163,7 @@ PULSE_ON_GAMESCENE(Level_One)
         asterisk,
         ship,
         [] { PULSE_DEFER_SCENE(asterisk, Game_Over); },
-        [] { PULSE_DEFER_SCENE(asterisk, Level_Two); }); // next level
+        [] { PULSE_LOAD_NEXT_SCENE(asterisk, Level_Two); }); // next level
 
     asterisk.tick_animation(ship_animator, "ship_sprite");
     asterisk.tick_vfx();
@@ -181,7 +200,44 @@ PULSE_ON_GAMESCENE(Level_Two)
         asterisk,
         ship,
         [] { PULSE_DEFER_SCENE(asterisk, Game_Over); },
-        [] { PULSE_DEFER_SCENE(asterisk, Game_Won); }); // next level
+        [] { PULSE_LOAD_NEXT_SCENE(asterisk, Level_Three); }); // next level
+
+    asterisk.tick_animation(ship_animator, "ship_sprite");
+    asterisk.tick_vfx();
+    asterisk.render();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Level Two
+
+/**
+ * @brief
+ * Third level Start
+ *
+ * @scope: Level_Three
+ */
+PULSE_ON_GAMESCENE_START(Level_Three)
+{
+    level_three::on_level_three_start(
+        asterisk, [](pulse2d_body* body, const char* sprite) {
+            asterisk.draw_body(body, sprite);
+        });
+}
+
+PULSE_ON_GAMESCENE(Level_Three)
+{
+    asterisk.tick();
+    asterisk.render_backgrounds();
+
+    pulse2d_body& ship = asterisk.get_body("ship_object");
+
+    register_animation(ship_animator, ship_thrust);
+
+    level_three::on_level_three_tick(
+        asterisk,
+        ship,
+        [] { PULSE_DEFER_SCENE(asterisk, Game_Over); },
+        [] { PULSE_DEFER_SCENE(asterisk, Game_Won); });
 
     asterisk.tick_animation(ship_animator, "ship_sprite");
     asterisk.tick_vfx();
@@ -198,13 +254,28 @@ PULSE_ON_GAMESTART()
     pulse2d_math::init_trng_engine_random();
     pulse_register_etl_error_handler();
     asterisk.init(0.0f, 0.0f, 10);
+    // asterisk.enable_audio();
     PULSE_ENABLE_SEESAW_GAMEPAD();
-    PULSE_SET_SCENE(asterisk, Level_Two /*Start_Screen*/);
+    PULSE_SET_SCENE(asterisk, Level_Three);
 }
 
 PULSE_ON_GAMELOOP()
 {
     PULSE_POLL_SEESAW_GAMEPAD();
+
+    /////////////////
+    // Load screen //
+    /////////////////
+
+    if (state.game_loading) {
+        if (state.load_timer <= 3500) {
+            asterisk.draw_sprite("loading_screen", 0, 0);
+            asterisk.render();
+            return;
+        } else {
+            state.game_loading = false;
+        }
+    }
 
     //////////////////
     // Pause screen //
